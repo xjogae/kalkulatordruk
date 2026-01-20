@@ -77,10 +77,16 @@
         <h1>Kalkulator Kosztów Wydruku 3D</h1>
         
         <div class="info">
-            <strong>Uwaga:</strong> Zużycie energii: 0.079 kWh na godzinę druku
+            <strong>Zużycie energii:</strong> Wybierz drukarkę – wartości średnie podczas druku.
         </div>
         
         <form id="calcForm">
+            <label for="printer">Wybierz drukarkę:</label>
+            <select id="printer" onchange="updateEnergyInfo()">
+                <option value="a1mini" data-kwh="0.079">Bambu Lab A1 Mini - 0.079 kWh/godz.</option>
+                <option value="p1s" data-kwh="0.115">Bambu Lab P1S - 0.115 kWh/godz.</option>
+            </select>
+
             <label for="filament">Wybierz filament:</label>
             <select id="filament" onchange="updateFilamentPrice()">
                 <option value="pla">PLA - 50 zł/kg</option>
@@ -101,10 +107,13 @@
 
         <div id="results">
             <div class="breakdown">
+                <strong>Zużycie energii:</strong> <span id="energyKwh">0</span> kWh (<span id="energyRate">0</span> kWh/godz.)
+            </div>
+            <div class="breakdown">
                 <strong>Koszt filamentu:</strong> <span id="filamentCost">0</span> zł
             </div>
             <div class="breakdown">
-                <strong>Koszt energii (0.79 kWh/godz.):</strong> <span id="energyCost">0</span> zł
+                <strong>Koszt energii:</strong> <span id="energyCost">0</span> zł
             </div>
             <div class="cost" id="totalCost">0 zł</div>
         </div>
@@ -116,10 +125,19 @@
             petg: 45
         };
 
-        const ENERGY_PER_HOUR = 0.079;  // kWh/godz
+        let printers = {
+            a1mini: 0.079,
+            p1s: 0.115
+        };
+
+        function updateEnergyInfo() {
+            const printer = document.getElementById('printer');
+            const rate = printer.options[printer.selectedIndex].dataset.kwh;
+            // Update display if needed
+        }
 
         function updateFilamentPrice() {
-            // Auto-update if needed
+            // Fixed prices
         }
 
         document.getElementById('calcForm').addEventListener('submit', function(e) {
@@ -128,20 +146,26 @@
         });
 
         function calculate() {
+            const printerValue = document.getElementById('printer').value;
             const filament = document.getElementById('filament').value;
             const hours = parseFloat(document.getElementById('hours').value);
             const grams = parseFloat(document.getElementById('grams').value);
             const kwhPrice = parseFloat(document.getElementById('kwhPrice').value);
 
-            // Filament cost: price per kg / 1000 * grams
-            const filamentCost = (filamentPrices[filament] / 1000) * grams;
+            const energyPerHour = printers[printerValue];
+            const filamentPrice = filamentPrices[filament];
 
-            // Energy: 0.79 kWh per hour * hours * price per kWh
-            const energyKwh = ENERGY_PER_HOUR * hours;
+            // Filament cost
+            const filamentCost = (filamentPrice / 1000) * grams;
+
+            // Energy cost
+            const energyKwh = energyPerHour * hours;
             const energyCost = energyKwh * kwhPrice;
 
             const total = filamentCost + energyCost;
 
+            document.getElementById('energyKwh').textContent = energyKwh.toFixed(2);
+            document.getElementById('energyRate').textContent = energyPerHour;
             document.getElementById('filamentCost').textContent = filamentCost.toFixed(2);
             document.getElementById('energyCost').textContent = energyCost.toFixed(2);
             document.getElementById('totalCost').textContent = total.toFixed(2);

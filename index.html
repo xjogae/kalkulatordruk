@@ -35,6 +35,13 @@
             border-radius: 5px;
             box-sizing: border-box;
         }
+        .custom-fields {
+            display: none;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+        }
         button {
             width: 100%;
             padding: 12px;
@@ -80,26 +87,36 @@
 <body>
     <div class="container">
         <h1>Kalkulator Kosztów Wydruku 3D</h1>
-         <h2>by xJogae</h2>
         
-        <div class="info">
+         <div class="info">
             <strong>Zużycie energii:</strong> Wybierz drukarkę – wartości średnie podczas druku 
         </div>
-        
         <form id="calcForm">
             <label for="printer">Wybierz drukarkę:</label>
-            <select id="printer" onchange="updateEnergyInfo()">
+            <select id="printer" onchange="toggleCustomPrinter()">
                 <option value="a1mini" data-kwh="0.079">Bambu Lab A1 Mini - 0.079 kWh/godz.</option>
                 <option value="p1s" data-kwh="0.115">Bambu Lab P1S - 0.115 kWh/godz.</option>
+                <option value="custom">Inne - wprowadź własne zużycie</option>
             </select>
 
+            <div id="customPrinterFields" class="custom-fields">
+                <label for="customKwhHour">Zużycie energii (kWh/godz.):</label>
+                <input type="number" id="customKwhHour" min="0" step="0.001" value="0.1" placeholder="np. 0.150">
+            </div>
+
             <label for="filament">Wybierz filament:</label>
-            <select id="filament" onchange="updateFilamentPrice()">
+            <select id="filament" onchange="toggleCustomFilament()">
                 <option value="pla">PLA - 40 zł/kg</option>
                 <option value="petg">PETG - 35 zł/kg</option>
                 <option value="plapremium">PLA Premium - 65 zł/kg</option>
                 <option value="petgpremium">PETG Premium - 60 zł/kg</option>
+                <option value="custom">Inne - wprowadź własną cenę</option>
             </select>
+
+            <div id="customFilamentFields" class="custom-fields">
+                <label for="customFilamentPrice">Cena filamentu (zł/kg):</label>
+                <input type="number" id="customFilamentPrice" min="0" step="0.01" value="50" placeholder="np. 55.50">
+            </div>
 
             <label for="hours">Czas wydruku (godziny):</label>
             <input type="number" id="hours" min="0" step="0.1" required>
@@ -142,12 +159,14 @@
             p1s: 0.115
         };
 
-        function updateEnergyInfo() {
-            // Optional: dynamic info
+        function toggleCustomPrinter() {
+            const printer = document.getElementById('printer').value;
+            document.getElementById('customPrinterFields').style.display = printer === 'custom' ? 'block' : 'none';
         }
 
-        function updateFilamentPrice() {
-            // Fixed prices
+        function toggleCustomFilament() {
+            const filament = document.getElementById('filament').value;
+            document.getElementById('customFilamentFields').style.display = filament === 'custom' ? 'block' : 'none';
         }
 
         document.getElementById('calcForm').addEventListener('submit', function(e) {
@@ -165,11 +184,26 @@
                 const kwhPrice = parseFloat(document.getElementById('kwhPrice').value);
 
                 if (!hours || !grams || !kwhPrice) {
-                    throw new Error('Wypełnij wszystkie pola liczbowe.');
+                    throw new Error('Wypełnij wszystkie wymagane pola liczbowe.');
                 }
 
-                const energyPerHour = printers[printerValue];
-                const filamentPrice = filamentPrices[filament];
+                // Energy per hour
+                let energyPerHour;
+                if (printerValue === 'custom') {
+                    energyPerHour = parseFloat(document.getElementById('customKwhHour').value);
+                    if (!energyPerHour) throw new Error('Podaj zużycie kWh/godz. dla "Inne".');
+                } else {
+                    energyPerHour = printers[printerValue];
+                }
+
+                // Filament price
+                let filamentPrice;
+                if (filament === 'custom') {
+                    filamentPrice = parseFloat(document.getElementById('customFilamentPrice').value);
+                    if (!filamentPrice) throw new Error('Podaj cenę filamentu zł/kg dla "Inne".');
+                } else {
+                    filamentPrice = filamentPrices[filament];
+                }
 
                 const filamentCost = (filamentPrice / 1000) * grams;
                 const energyKwh = energyPerHour * hours;
@@ -177,7 +211,7 @@
                 const total = filamentCost + energyCost;
 
                 document.getElementById('energyKwh').textContent = energyKwh.toFixed(3);
-                document.getElementById('energyRate').textContent = energyPerHour;
+                document.getElementById('energyRate').textContent = energyPerHour.toFixed(3);
                 document.getElementById('filamentCost').textContent = filamentCost.toFixed(2);
                 document.getElementById('energyCost').textContent = energyCost.toFixed(2);
                 document.getElementById('totalCost').textContent = total.toFixed(2);

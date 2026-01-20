@@ -91,6 +91,8 @@
             <select id="filament" onchange="updateFilamentPrice()">
                 <option value="pla">PLA - 50 zł/kg</option>
                 <option value="petg">PETG - 45 zł/kg</option>
+                <option value="plapremium">PLA Premium - 65 zł/kg</option>
+                <option value="petgpremium">PETG Premium - 60 zł/kg</option>
             </select>
 
             <label for="hours">Czas wydruku (godziny):</label>
@@ -121,8 +123,10 @@
 
     <script>
         let filamentPrices = {
-            pla: 50,  // zł/kg
-            petg: 45
+            pla: 40,  // zł/kg
+            plapremium: 65
+            petg: 35
+            petgpremium:60
         };
 
         let printers = {
